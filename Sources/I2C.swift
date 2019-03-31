@@ -94,7 +94,7 @@ public final class SysFSI2C: I2CInterface {
     var currentSlave: Int = -1
 
     public func peep() {
-        print("peep")
+        print("peep!")
     }
 
     public init(i2cId: Int) {
