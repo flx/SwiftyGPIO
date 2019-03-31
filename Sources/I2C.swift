@@ -273,6 +273,42 @@ public final class SysFSI2C: I2CInterface {
     // Private functions
     // Swift implementation of the smbus functions provided by i2c-dev
 
+    private struct i2c_msg {
+        let addr:UInt16
+        let flags:UInt16
+        let len:UInt16
+        let buf:UnsafeMutablePointer<UInt8>
+
+        enum flag:UInt16 {
+                case I2C_M_TEN          = 0x0010        /* this is a ten bit chip address */
+                case I2C_M_RD           = 0x0001        /* read data, from slave to master */
+                case I2C_M_NOSTART      = 0x4000        /* if I2C_FUNC_PROTOCOL_MANGLING */
+                case I2C_M_REV_DIR_ADDR = 0x2000        /* if I2C_FUNC_PROTOCOL_MANGLING */
+                case I2C_M_IGNORE_NAK   = 0x1000        /* if I2C_FUNC_PROTOCOL_MANGLING */
+                case I2C_M_NO_RD_ACK    = 0x0800        /* if I2C_FUNC_PROTOCOL_MANGLING */
+                case I2C_M_RECV_LEN     = 0x0400        /* length will be first received byte */
+        }
+    }
+
+    private struct i2c_rdwr_ioctl_data {
+        let msgs:[i2c_msg]
+        let nmsgs:UInt32
+    }
+    
+    public func peep() {
+        print("peep")
+    }
+
+    private func rdwr_ioctl(rw: UInt8, data: i2c_rdwr_ioctl_data) -> Int32 {
+        if fd == -1 {
+            openI2C()
+        }
+
+	var data2 = data
+
+	return ioctl(fd, I2C_RDWR, &data2)
+    }
+
     private struct i2c_smbus_ioctl_data {
         var read_write: UInt8
         var command: UInt8
