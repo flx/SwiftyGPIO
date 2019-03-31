@@ -71,6 +71,7 @@ extension SwiftyGPIO {
 // MARK: I2C
 
 public protocol I2CInterface {
+    func peep()
     func isReachable(_ address: Int) -> Bool
     func setPEC(_ address: Int, enabled: Bool)
     func readByte(_ address: Int) -> UInt8
@@ -91,6 +92,10 @@ public final class SysFSI2C: I2CInterface {
     let i2cId: Int
     var fd: Int32 = -1
     var currentSlave: Int = -1
+
+    public func peep() {
+        print("peep")
+    }
 
     public init(i2cId: Int) {
         self.i2cId=i2cId
@@ -295,10 +300,6 @@ public final class SysFSI2C: I2CInterface {
         let nmsgs:UInt32
     }
     
-    public func peep() {
-        print("peep")
-    }
-
     private func rdwr_ioctl(rw: UInt8, data: i2c_rdwr_ioctl_data) -> Int32 {
         if fd == -1 {
             openI2C()
