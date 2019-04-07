@@ -83,6 +83,7 @@ public protocol I2CInterface {
     func writeByte(_ address: Int, command: UInt8, value: UInt8)
     func writeWord(_ address: Int, command: UInt8, value: UInt16)
     func writeData(_ address: Int, command: UInt8, values: [UInt8])
+    func readWordFromCommand(address: Int, command: [UInt8] , commandLength: UInt8, delayms: UInt16, readlen: Int) -> [UInt16]
     // One-shot rd/wr not provided
 }
 
@@ -278,7 +279,7 @@ public final class SysFSI2C: I2CInterface {
     // Private functions
     // Swift implementation of the smbus functions provided by i2c-dev
 
-    private struct i2c_msg {
+    public struct i2c_msg {
         let addr:UInt16
         let flags:UInt16
         let len:UInt16
@@ -295,12 +296,34 @@ public final class SysFSI2C: I2CInterface {
         }
     }
 
-    private struct i2c_rdwr_ioctl_data {
+    public struct i2c_rdwr_ioctl_data {
         let msgs:[i2c_msg]
         let nmsgs:UInt32
     }
     
-    private func rdwr_ioctl(rw: UInt8, data: i2c_rdwr_ioctl_data) -> Int32 {
+    public func readWordFromCommand(address: Int, command: [UInt8] , commandLength: UInt8, delayms: UInt16, readlen: Int) -> [UInt16] {
+    	let ret : [UInt16] = Array(repeating: 0, count: readlen) 
+
+	var buffer1:[UInt8] = [0x20, 0x03]
+	let msg1 = i2c_msg(addr:UInt16(address),
+			  flags:0,
+			  len: 2,
+			  buf: &buffer1)
+	var buffer2:[UInt8] = Array(repeating: 0, count: 3)
+	let msg2 = i2c_msg(addr:UInt16(address),
+			  flags: i2c_msg.flag.I2C_M_RD.rawValue,
+			  len: 3,
+			  buf: &buffer2)
+
+	let data = i2c_rdwr_ioctl_data(msgs: [msg1, msg2], nmsgs:2)
+
+	let retval = rdwr_ioctl(data: data)
+	print("rdwr_ioctl: \(retval)")
+
+        return ret
+    }
+
+    private func rdwr_ioctl(data: i2c_rdwr_ioctl_data) -> Int32 {
         if fd == -1 {
             openI2C()
         }
